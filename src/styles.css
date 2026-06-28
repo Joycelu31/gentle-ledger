@@ -1,0 +1,448 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f8fbf7;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.timeline-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(96, 140, 90, 0.28) transparent;
+}
+
+.timeline-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.timeline-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(96, 140, 90, 0.28);
+}
+
+.asset-page {
+  animation: asset-page-in 260ms ease-out both;
+}
+
+input[inputmode="decimal"] {
+  -moz-appearance: textfield;
+}
+
+input[inputmode="decimal"]::-webkit-outer-spin-button,
+input[inputmode="decimal"]::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.mood-scene {
+  isolation: isolate;
+}
+
+.mood-light {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.9), transparent 34%),
+    linear-gradient(180deg, rgba(237, 246, 234, 0.74), rgba(255, 255, 255, 0.32));
+  animation: mood-light-breathe 8s ease-in-out infinite;
+}
+
+.mood-cloud::before,
+.mood-cloud::after {
+  position: absolute;
+  content: "";
+  bottom: 14%;
+  border-radius: 999px;
+  background: inherit;
+}
+
+.mood-cloud::before {
+  left: 18%;
+  width: 42%;
+  height: 128%;
+}
+
+.mood-cloud::after {
+  right: 16%;
+  width: 36%;
+  height: 105%;
+}
+
+.mood-cloud-a {
+  animation: mood-cloud-drift-a 34s linear infinite;
+}
+
+.mood-cloud-b {
+  animation: mood-cloud-drift-b 42s linear infinite;
+}
+
+.mood-grass {
+  transform-origin: center bottom;
+  animation: mood-grass-sway 6s ease-in-out infinite;
+}
+
+.mood-breathe {
+  transform-origin: center bottom;
+  animation: mood-breathe 5.8s ease-in-out infinite;
+}
+
+.mood-walk {
+  transform-origin: center bottom;
+  animation: mood-walk 6.5s ease-in-out infinite;
+}
+
+.mood-bounce-soft {
+  transform-origin: center bottom;
+  animation: mood-bounce-soft 5s ease-in-out infinite;
+}
+
+.forest-scene {
+  z-index: 0;
+}
+
+.sky-wash {
+  background:
+    linear-gradient(180deg, rgba(235, 244, 232, 0.94) 0%, rgba(248, 251, 247, 0.86) 48%, rgba(246, 250, 244, 0.94) 100%),
+    radial-gradient(circle at 18% 10%, rgba(226, 239, 218, 0.74), transparent 34%),
+    radial-gradient(circle at 78% 22%, rgba(238, 226, 204, 0.46), transparent 28%);
+}
+
+.sun {
+  background: radial-gradient(circle, rgba(232, 132, 113, 0.58) 0%, rgba(245, 181, 157, 0.26) 48%, rgba(245, 181, 157, 0) 72%);
+  filter: blur(0.2px);
+}
+
+.cloud::before,
+.cloud::after {
+  position: absolute;
+  content: "";
+  bottom: 16%;
+  border-radius: 999px;
+  background: inherit;
+}
+
+.cloud::before {
+  left: 16%;
+  width: 42%;
+  height: 130%;
+}
+
+.cloud::after {
+  right: 15%;
+  width: 38%;
+  height: 105%;
+}
+
+.cloud-a {
+  animation: cloud-drift-a 52s linear infinite;
+}
+
+.cloud-b {
+  animation: cloud-drift-b 64s linear infinite;
+}
+
+.balloon {
+  animation: balloon-breathe 7.5s ease-in-out infinite;
+}
+
+.tree {
+  transform-origin: bottom center;
+}
+
+.tree-left {
+  animation: tree-sway-left 8s ease-in-out infinite;
+}
+
+.tree-mid {
+  animation: tree-sway-mid 8s ease-in-out infinite;
+  animation-delay: -2.2s;
+}
+
+.tree-small {
+  animation: tree-sway-small 8s ease-in-out infinite;
+  animation-delay: -4s;
+}
+
+.flowers {
+  transform-origin: center bottom;
+  animation: flower-sway 5.5s ease-in-out infinite;
+}
+
+.dogs {
+  animation: dogs-approach 7s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.dog {
+  transform-origin: center bottom;
+}
+
+.dog-white {
+  animation: dog-wiggle-white 3.8s ease-in-out infinite;
+}
+
+.dog-yellow {
+  animation: dog-wiggle-yellow 3.8s ease-in-out infinite;
+  animation-delay: -1.1s;
+}
+
+.dog-black {
+  animation: dog-wiggle-black 3.8s ease-in-out infinite;
+  animation-delay: -2.3s;
+}
+
+.quick-feedback {
+  animation: quick-feedback-rise 1.8s ease both;
+}
+
+@keyframes cloud-drift-a {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(128vw);
+  }
+}
+
+@keyframes cloud-drift-b {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-126vw);
+  }
+}
+
+@keyframes balloon-breathe {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}
+
+@keyframes tree-sway-left {
+  0%,
+  100% {
+    transform: translate(38px, 72px) rotate(0deg);
+  }
+  50% {
+    transform: translate(38px, 72px) rotate(0.8deg);
+  }
+}
+
+@keyframes tree-sway-mid {
+  0%,
+  100% {
+    transform: translate(494px, 48px) rotate(0deg);
+  }
+  50% {
+    transform: translate(494px, 48px) rotate(-0.75deg);
+  }
+}
+
+@keyframes tree-sway-small {
+  0%,
+  100% {
+    transform: translate(420px, 92px) rotate(0deg);
+  }
+  50% {
+    transform: translate(420px, 92px) rotate(0.9deg);
+  }
+}
+
+@keyframes flower-sway {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(2px) rotate(0.7deg);
+  }
+}
+
+@keyframes dogs-approach {
+  0%,
+  100% {
+    transform: translate(34px, 140px) scale(0.985);
+  }
+  50% {
+    transform: translate(34px, 137px) scale(1);
+  }
+}
+
+@keyframes dog-wiggle-white {
+  0%,
+  100% {
+    transform: translate(0, 8px) scale(0.82) rotate(0deg);
+  }
+  50% {
+    transform: translate(0, 8px) scale(0.82) rotate(-1.2deg);
+  }
+}
+
+@keyframes dog-wiggle-yellow {
+  0%,
+  100% {
+    transform: translate(246px, 24px) scale(0.82) rotate(0deg);
+  }
+  50% {
+    transform: translate(246px, 24px) scale(0.82) rotate(1.15deg);
+  }
+}
+
+@keyframes dog-wiggle-black {
+  0%,
+  100% {
+    transform: translate(486px, 15px) scale(0.76) rotate(0deg);
+  }
+  50% {
+    transform: translate(486px, 15px) scale(0.76) rotate(-1.1deg);
+  }
+}
+
+@keyframes quick-feedback-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  18%,
+  78% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0.82;
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes asset-page-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mood-light-breathe {
+  0%,
+  100% {
+    opacity: 0.82;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes mood-cloud-drift-a {
+  0% {
+    transform: translateX(-18px);
+  }
+  100% {
+    transform: translateX(250px);
+  }
+}
+
+@keyframes mood-cloud-drift-b {
+  0% {
+    transform: translateX(20px);
+  }
+  100% {
+    transform: translateX(-240px);
+  }
+}
+
+@keyframes mood-grass-sway {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes mood-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
+@keyframes mood-walk {
+  0%,
+  100% {
+    transform: translate(128px, 78px) rotate(0deg);
+  }
+  50% {
+    transform: translate(132px, 76px) rotate(-0.8deg);
+  }
+}
+
+@keyframes mood-bounce-soft {
+  0%,
+  100% {
+    transform: translate(86px, 66px) translateY(0);
+  }
+  50% {
+    transform: translate(86px, 66px) translateY(-4px);
+  }
+}
+
+@media (min-width: 640px) {
+  .forest-line {
+    bottom: 5.75rem;
+    width: 720px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloud-a,
+  .cloud-b,
+  .balloon,
+  .tree,
+  .flowers,
+  .dogs,
+  .dog,
+  .quick-feedback,
+  .mood-light,
+  .mood-cloud-a,
+  .mood-cloud-b,
+  .mood-grass,
+  .mood-breathe,
+  .mood-walk,
+  .mood-bounce-soft,
+  .asset-page {
+    animation: none;
+  }
+}
