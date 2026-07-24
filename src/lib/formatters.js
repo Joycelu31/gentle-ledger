@@ -1,4 +1,4 @@
-import { isThisMonth } from "./dateUtils";
+import { getMonthKey, isSameMonth } from "./dateUtils";
 import { isNormalRecord } from "./parser";
 
 export function toCurrency(value) {
@@ -36,10 +36,10 @@ export function buildCategorySummary(records) {
   return [...summary.values()].sort((a, b) => b.expense + b.income - (a.expense + a.income));
 }
 
-export function buildMonthlyLightStats(records) {
+export function buildMonthlyLightStats(records, monthKey = getMonthKey()) {
   const counts = new Map();
   records
-    .filter((record) => isNormalRecord(record) && isThisMonth(record.date))
+    .filter((record) => isNormalRecord(record) && isSameMonth(record.date, monthKey))
     .forEach((record) => {
       const key = record.title || record.category || "生活记录";
       const current = counts.get(key) || {

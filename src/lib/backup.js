@@ -62,12 +62,12 @@ export async function importBackupData(file) {
     const moods = data.moods && typeof data.moods === "object" ? data.moods : {};
     const defaultAccount = data.defaultAccount || "cash";
 
-    set("records", JSON.stringify(records));
-    set("accounts", JSON.stringify(accounts));
-    set("budgets", JSON.stringify(budgets));
-    set("travels", JSON.stringify(travels));
-    set("moods", JSON.stringify(moods));
-    set("defaultAccount", defaultAccount);
+    set(STORAGE_KEY, JSON.stringify(records));
+    set(ACCOUNT_STORAGE_KEY, JSON.stringify(accounts));
+    set(BUDGET_STORAGE_KEY, JSON.stringify(budgets));
+    set(TRAVEL_STORAGE_KEY, JSON.stringify(travels));
+    set(MOOD_STORAGE_KEY, JSON.stringify(moods));
+    set(DEFAULT_ACCOUNT_STORAGE_KEY, defaultAccount);
 
     return { success: true, message: "导入成功" };
   } catch {

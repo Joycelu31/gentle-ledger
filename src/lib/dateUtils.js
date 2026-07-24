@@ -16,8 +16,15 @@ export function isToday(dateText) {
 }
 
 export function isThisMonth(dateText) {
-  const now = new Date();
-  return dateText.startsWith(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+  return isSameMonth(dateText, getMonthKey());
+}
+
+export function getRecordMonthKey(dateText = "") {
+  return typeof dateText === "string" && /^\d{4}-\d{2}/.test(dateText) ? dateText.slice(0, 7) : "";
+}
+
+export function isSameMonth(dateText, monthKey = getMonthKey()) {
+  return getRecordMonthKey(dateText) === monthKey;
 }
 
 export function formatDateLabel(dateText) {
@@ -43,7 +50,7 @@ export function groupRecordsByMonth(records) {
     return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
   });
   return sortedRecords.reduce((groups, record) => {
-    const monthKey = record.date.slice(0, 7);
+    const monthKey = getRecordMonthKey(record.date);
     const lastGroup = groups[groups.length - 1];
     if (lastGroup?.monthKey === monthKey) {
       lastGroup.records.push(record);

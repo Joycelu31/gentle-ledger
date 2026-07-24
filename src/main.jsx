@@ -20,7 +20,7 @@ import {
   recordCanAffectBalance,
   shouldRecordAffectBalance,
 } from "./lib/accountBalance";
-import { getMonthKey, groupRecordsByMonth, isThisMonth, isToday, toDateInputValue } from "./lib/dateUtils";
+import { getMonthKey, groupRecordsByMonth, isSameMonth, isToday, toDateInputValue } from "./lib/dateUtils";
 import { buildCategorySummary, buildLightStatsForRecords, buildMonthlyLightStats, formatMonthLabel, formatRecordTime, toCurrency } from "./lib/formatters";
 import { createRecordId, detectEmotion, isNormalRecord, normalizeTransactionType, parseQuickEntry, pickEmotionScene } from "./lib/parser";
 import {
@@ -38,8 +38,8 @@ import {
   saveTravels,
 } from "./lib/storage";
 
-function LightStats({ records }) {
-  const stats = useMemo(() => buildMonthlyLightStats(records), [records]);
+function LightStats({ records, monthKey }) {
+  const stats = useMemo(() => buildMonthlyLightStats(records, monthKey), [records, monthKey]);
 
   return (
     <section className="mt-5 rounded-[28px] border border-white/75 bg-white/55 p-4 shadow-card backdrop-blur-xl">
@@ -565,7 +565,13 @@ function AssetPage({ accounts, defaultAccountId, onUpdateAccount, onUpdateAccoun
           </div>
           <div className="shrink-0 text-right">
             <p className="text-xs text-stone-400">当前余额</p>
-            <p className="mt-1 text-lg font-semibold text-stone-700">{toCurrency(account.balance)}</p>
+            <button
+              className="mt-1 rounded-full bg-white/68 px-2.5 py-1 text-lg font-semibold text-stone-700 shadow-sm transition active:scale-[0.98]"
+              type="button"
+              onClick={() => openResetSheet(account)}
+            >
+              {toCurrency(account.balance)}
+            </button>
           </div>
         </div>
         <div className="mt-4 flex justify-end gap-2">
@@ -709,9 +715,9 @@ function AssetPage({ accounts, defaultAccountId, onUpdateAccount, onUpdateAccoun
       </div>
 
       {editingAccount && (
-        <div className="fixed inset-0 z-50 flex items-end bg-stone-900/12 px-4 pb-4 backdrop-blur-sm" onClick={() => setEditingAccountId(null)}>
+        <div className="fixed inset-0 z-50 flex items-end bg-stone-900/24 px-4 pb-4 backdrop-blur-md" onClick={() => setEditingAccountId(null)}>
           <div
-            className="mx-auto w-full max-w-[430px] rounded-[30px] border border-white/80 bg-white/92 p-5 shadow-soft backdrop-blur-2xl"
+            className="mx-auto w-full max-w-[430px] rounded-[30px] border border-leaf-100 bg-[#fffef9] p-5 shadow-[0_24px_70px_rgba(65,84,55,0.26)]"
             onClick={(event) => event.stopPropagation()}
           >
             <p className="text-sm text-stone-400">整理账户</p>
@@ -719,7 +725,7 @@ function AssetPage({ accounts, defaultAccountId, onUpdateAccount, onUpdateAccoun
             <label className="mt-5 block text-xs text-stone-400">
               账户名称
               <input
-                className="mt-1 h-12 w-full rounded-2xl bg-leaf-50/70 px-4 text-sm text-stone-700 outline-none placeholder:text-stone-300"
+                className="mt-1 h-12 w-full rounded-2xl border border-leaf-100 bg-white px-4 text-sm text-stone-800 outline-none placeholder:text-stone-300"
                 placeholder={editingAccount.name}
                 value={accountDraft.customName}
                 onChange={(event) => setAccountDraft((draft) => ({ ...draft, customName: event.target.value }))}
@@ -728,7 +734,7 @@ function AssetPage({ accounts, defaultAccountId, onUpdateAccount, onUpdateAccoun
             <label className="mt-3 block text-xs text-stone-400">
               备注
               <textarea
-                className="mt-1 min-h-20 w-full resize-none rounded-2xl bg-white/76 px-4 py-3 text-sm text-stone-700 outline-none placeholder:text-stone-300"
+                className="mt-1 min-h-20 w-full resize-none rounded-2xl border border-leaf-100 bg-white px-4 py-3 text-sm text-stone-800 outline-none placeholder:text-stone-300"
                 placeholder="比如：日常小额支出"
                 value={accountDraft.note}
                 onChange={(event) => setAccountDraft((draft) => ({ ...draft, note: event.target.value }))}
@@ -747,14 +753,14 @@ function AssetPage({ accounts, defaultAccountId, onUpdateAccount, onUpdateAccoun
       )}
 
       {resetAccount && (
-        <div className="fixed inset-0 z-50 flex items-end bg-stone-900/12 px-4 pb-4 backdrop-blur-sm" onClick={() => setResetAccountId(null)}>
+        <div className="fixed inset-0 z-50 flex items-end bg-stone-900/24 px-4 pb-4 backdrop-blur-md" onClick={() => setResetAccountId(null)}>
           <div
-            className="mx-auto w-full max-w-[430px] rounded-[30px] border border-white/80 bg-white/92 p-5 shadow-soft backdrop-blur-2xl"
+            className="mx-auto w-full max-w-[430px] rounded-[30px] border border-leaf-100 bg-[#fffef9] p-5 shadow-[0_24px_70px_rgba(65,84,55,0.26)]"
             onClick={(event) => event.stopPropagation()}
           >
             <p className="text-sm text-stone-400">要重新校准这个账户余额吗？</p>
             <h2 className="mt-1 text-lg font-semibold text-stone-800">{getAccountDisplayName(resetAccount)}</h2>
-            <label className="mt-5 flex h-14 items-center rounded-[22px] bg-leaf-50/70 px-4">
+            <label className="mt-5 flex h-14 items-center rounded-[22px] border border-leaf-100 bg-white px-4 shadow-inner">
               <span className="mr-2 text-stone-400">¥</span>
               <input
                 className="min-w-0 flex-1 bg-transparent text-xl font-semibold text-stone-700 outline-none placeholder:text-stone-300"
@@ -870,6 +876,7 @@ function SwipeRecordRow({
   onRequestDelete,
   onLongPress,
   onToggleSelect,
+  onAmountEdit,
 }) {
   const [pressStartX, setPressStartX] = useState(null);
   const [swiped, setSwiped] = useState(false);
@@ -878,7 +885,14 @@ function SwipeRecordRow({
   const transactionType = normalizeTransactionType(record.transactionType);
   const transactionMeta = transactionTypeMeta[transactionType] || transactionTypeMeta.normal;
 
-  function beginPress(clientX) {
+  function getClientX(event) {
+    return event.touches?.[0]?.clientX ?? event.changedTouches?.[0]?.clientX ?? event.clientX;
+  }
+
+  function beginPress(event) {
+    if (event.target.closest("button, input, select, textarea, a")) return;
+    const clientX = getClientX(event);
+    if (typeof clientX !== "number") return;
     setPressStartX(clientX);
     longPressFired.current = false;
     window.clearTimeout(longPressTimer.current);
@@ -888,9 +902,14 @@ function SwipeRecordRow({
     }, 520);
   }
 
-  function handlePressEnd(clientX) {
+  function handlePressEnd(event) {
     window.clearTimeout(longPressTimer.current);
     if (pressStartX === null) return;
+    if (event.target.closest("button, input, select, textarea, a")) {
+      setPressStartX(null);
+      return;
+    }
+    const clientX = getClientX(event);
     const deltaX = clientX - pressStartX;
     if (deltaX < -44) {
       setSwiped(true);
@@ -923,11 +942,11 @@ function SwipeRecordRow({
         data-record-row="true"
         className={`relative bg-white/70 transition-transform duration-200 active:scale-[0.99] ${selected ? "ring-2 ring-leaf-300" : ""} ${compact ? "px-3 py-2" : "px-4 py-3"}`}
         style={{ transform: swiped ? "translateX(-68px)" : "translateX(0)" }}
-        onMouseDown={(event) => beginPress(event.clientX)}
-        onMouseUp={(event) => handlePressEnd(event.clientX)}
+        onMouseDown={beginPress}
+        onMouseUp={handlePressEnd}
         onMouseLeave={() => window.clearTimeout(longPressTimer.current)}
-        onTouchStart={(event) => beginPress(event.touches[0].clientX)}
-        onTouchEnd={(event) => handlePressEnd(event.changedTouches[0].clientX)}
+        onTouchStart={beginPress}
+        onTouchEnd={handlePressEnd}
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
@@ -953,9 +972,16 @@ function SwipeRecordRow({
               </p>
             </div>
           </div>
-          <span className={`shrink-0 text-sm font-semibold ${record.type === "income" ? "text-leaf-700" : "text-bark-500"}`}>
+          <button
+            className={`shrink-0 rounded-full bg-white/72 px-2.5 py-1 text-sm font-semibold shadow-sm transition active:scale-[0.98] ${record.type === "income" ? "text-leaf-700" : "text-bark-500"}`}
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onAmountEdit?.(record.id);
+            }}
+          >
             {record.type === "income" ? "+" : "-"}{Number(record.amount).toLocaleString("zh-CN")}
-          </span>
+          </button>
         </div>
         {!compact && transactionType !== "normal" && (
           <span className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs ${transactionMeta.className}`}>
@@ -983,12 +1009,18 @@ function RecordPage({
   onRequestBatchDelete,
   onCompleteReceivable,
   onCompletePayable,
+  onQuickEditAmount,
 }) {
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirmBatchDelete, setConfirmBatchDelete] = useState(false);
+  const [selectedMonthKey, setSelectedMonthKey] = useState(() => getMonthKey());
   const assetPreview = accounts.filter((account) => Number(account.balance || 0) !== 0).slice(0, 2);
-  const visibleRecords = activeTravelId ? records.filter((record) => record.travelId === activeTravelId) : records;
+  const baseRecords = activeTravelId ? records.filter((record) => record.travelId === activeTravelId) : records;
+  const visibleRecords = useMemo(
+    () => baseRecords.filter((record) => isSameMonth(record.date, selectedMonthKey)),
+    [baseRecords, selectedMonthKey],
+  );
   const recentTotals = useMemo(() => {
     return visibleRecords.filter(isNormalRecord).reduce(
       (totals, record) => {
@@ -1035,6 +1067,13 @@ function RecordPage({
       return;
     }
     onRequestBatchDelete(selectedIds);
+    cancelBatchMode();
+  }
+
+  function moveSelectedMonth(step) {
+    const next = new Date(`${selectedMonthKey}-01T00:00:00`);
+    next.setMonth(next.getMonth() + step);
+    setSelectedMonthKey(getMonthKey(next));
     cancelBatchMode();
   }
 
@@ -1090,6 +1129,44 @@ function RecordPage({
           onCompletePayable={onCompletePayable}
           onDeleteReminder={onRequestDelete}
         />
+
+        <section className="mt-5 rounded-[26px] border border-white/80 bg-white/72 p-4 shadow-card backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-leaf-50 text-lg font-semibold text-leaf-700 transition active:scale-[0.98]"
+              type="button"
+              onClick={() => moveSelectedMonth(-1)}
+              aria-label="上个月"
+            >
+              ‹
+            </button>
+            <label className="min-w-0 flex-1 text-center text-xs text-stone-400">
+              月份
+              <input
+                className="mt-1 h-11 w-full rounded-2xl border border-leaf-100 bg-white/88 px-3 text-center text-sm font-medium text-stone-700 outline-none"
+                type="month"
+                value={selectedMonthKey}
+                onChange={(event) => {
+                  if (event.target.value) {
+                    setSelectedMonthKey(event.target.value);
+                    cancelBatchMode();
+                  }
+                }}
+              />
+            </label>
+            <button
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-leaf-50 text-lg font-semibold text-leaf-700 transition active:scale-[0.98]"
+              type="button"
+              onClick={() => moveSelectedMonth(1)}
+              aria-label="下个月"
+            >
+              ›
+            </button>
+          </div>
+          <p className="mt-3 text-center text-xs text-stone-400">
+            {formatMonthLabel(selectedMonthKey)} · {visibleRecords.length} 条记录
+          </p>
+        </section>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <article className="rounded-[26px] border border-white/80 bg-white/70 p-4 shadow-card backdrop-blur-xl">
@@ -1149,6 +1226,7 @@ function RecordPage({
                         onRequestDelete={onRequestDelete}
                         onLongPress={enterBatchMode}
                         onToggleSelect={toggleSelected}
+                        onAmountEdit={onQuickEditAmount}
                       />
                     ))}
                   </div>
@@ -1158,7 +1236,7 @@ function RecordPage({
           )}
         </div>
 
-        <LightStats records={visibleRecords} />
+        <LightStats records={visibleRecords} monthKey={selectedMonthKey} />
         <CategorySummary records={visibleRecords} />
       </div>
       {batchMode && (
@@ -1345,9 +1423,9 @@ function RecordEditSheet({ record, accounts, onClose, onSave, onDelete }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-stone-900/14 px-4 pb-4 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end bg-stone-900/24 px-4 pb-4 backdrop-blur-md" onClick={onClose}>
       <div
-        className="mx-auto w-full max-w-[430px] rounded-[32px] border border-white/80 bg-white/90 p-5 shadow-soft backdrop-blur-2xl"
+        className="mx-auto max-h-[calc(100dvh-2rem)] w-full max-w-[430px] overflow-y-auto rounded-[32px] border border-leaf-100 bg-[#fffef9] p-5 shadow-[0_24px_70px_rgba(65,84,55,0.26)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
@@ -1367,7 +1445,7 @@ function RecordEditSheet({ record, accounts, onClose, onSave, onDelete }) {
           <label className="text-xs text-stone-400">
             分类
             <select
-              className="mt-1 h-12 w-full rounded-2xl bg-leaf-50/70 px-3 text-sm text-stone-700 outline-none"
+              className="mt-1 h-12 w-full rounded-2xl border border-leaf-100 bg-white px-3 text-sm text-stone-800 outline-none"
               value={draft.category}
               onChange={(event) => updateDraft("category", event.target.value)}
             >
@@ -1381,7 +1459,7 @@ function RecordEditSheet({ record, accounts, onClose, onSave, onDelete }) {
           <label className="text-xs text-stone-400">
             账户
             <select
-              className="mt-1 h-12 w-full rounded-2xl bg-leaf-50/70 px-3 text-sm text-stone-700 outline-none"
+              className="mt-1 h-12 w-full rounded-2xl border border-leaf-100 bg-white px-3 text-sm text-stone-800 outline-none"
               value={draft.accountId}
               onChange={(event) => updateDraft("accountId", event.target.value)}
             >
@@ -1397,10 +1475,10 @@ function RecordEditSheet({ record, accounts, onClose, onSave, onDelete }) {
         <div className="mt-3 grid grid-cols-2 gap-3">
           <label className="text-xs text-stone-400">
             金额
-            <span className="mt-1 flex h-12 items-center rounded-2xl bg-white/80 px-3">
+            <span className="mt-1 flex h-12 items-center rounded-2xl border border-leaf-100 bg-white px-3 shadow-inner">
               <span className="mr-1 text-stone-400">¥</span>
               <input
-                className="min-w-0 flex-1 bg-transparent text-sm text-stone-700 outline-none"
+                className="min-w-0 flex-1 bg-transparent text-sm text-stone-800 outline-none"
                 inputMode="decimal"
                 value={draft.amount}
                 onChange={(event) => updateDraft("amount", event.target.value.replace(/[^\d.]/g, ""))}
@@ -1410,7 +1488,7 @@ function RecordEditSheet({ record, accounts, onClose, onSave, onDelete }) {
           <label className="text-xs text-stone-400">
             日期
             <button
-              className="mt-1 h-12 w-full rounded-2xl bg-white/80 px-3 text-left text-sm text-stone-700"
+              className="mt-1 h-12 w-full rounded-2xl border border-leaf-100 bg-white px-3 text-left text-sm text-stone-800"
               type="button"
               onClick={() => setShowCalendar((value) => !value)}
             >
@@ -1428,7 +1506,7 @@ function RecordEditSheet({ record, accounts, onClose, onSave, onDelete }) {
         <label className="mt-3 block text-xs text-stone-400">
           备注
           <textarea
-            className="mt-1 min-h-16 w-full resize-none rounded-2xl bg-white/80 px-3 py-3 text-sm text-stone-700 outline-none placeholder:text-stone-300"
+            className="mt-1 min-h-16 w-full resize-none rounded-2xl border border-leaf-100 bg-white px-3 py-3 text-sm text-stone-800 outline-none placeholder:text-stone-300"
             placeholder="可以空着"
             value={draft.note}
             onChange={(event) => updateDraft("note", event.target.value)}
@@ -1471,6 +1549,60 @@ function RecordEditSheet({ record, accounts, onClose, onSave, onDelete }) {
   );
 }
 
+function RecordAmountSheet({ record, onClose, onSave }) {
+  const [draft, setDraft] = useState(() => String(record?.amount || ""));
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    setDraft(String(record?.amount || ""));
+    window.setTimeout(() => inputRef.current?.focus(), 40);
+  }, [record]);
+
+  if (!record) return null;
+
+  function saveAmount() {
+    const amount = Number(draft || 0);
+    if (!Number.isFinite(amount)) return;
+    onSave(record.id, { amount });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end bg-stone-900/24 px-4 pb-4 backdrop-blur-md" onClick={onClose}>
+      <div
+        className="mx-auto w-full max-w-[430px] rounded-[30px] border border-leaf-100 bg-[#fffef9] p-5 shadow-[0_24px_70px_rgba(65,84,55,0.26)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <p className="text-sm font-medium text-stone-500">快速修改金额</p>
+        <h2 className="mt-1 truncate text-lg font-semibold text-stone-800">{record.title}</h2>
+        <label className="mt-5 flex h-16 items-center rounded-[24px] border border-leaf-200 bg-white px-4 shadow-inner">
+          <span className="mr-2 text-lg font-medium text-stone-500">¥</span>
+          <input
+            ref={inputRef}
+            className="min-w-0 flex-1 bg-transparent text-2xl font-semibold text-stone-800 outline-none placeholder:text-stone-300"
+            inputMode="decimal"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value.replace(/[^\d.]/g, ""))}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                saveAmount();
+              }
+            }}
+          />
+        </label>
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <button className="rounded-2xl border border-stone-200 bg-white px-3 py-3 text-sm font-medium text-stone-600" type="button" onClick={onClose}>
+            取消
+          </button>
+          <button className="rounded-2xl bg-leaf-700 px-3 py-3 text-sm font-medium text-white shadow-sm" type="button" onClick={saveAmount}>
+            保存金额
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BudgetModal({ draft, setDraft, onClose, onSave, onClear }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-stone-900/12 px-6 backdrop-blur-sm">
@@ -1503,7 +1635,7 @@ function BudgetModal({ draft, setDraft, onClose, onSave, onClear }) {
   );
 }
 
-function RecentRecords({ records, onOpenRecord, onRequestDelete }) {
+function RecentRecords({ records, onOpenRecord, onRequestDelete, onQuickEditAmount }) {
   return (
     <section className="mt-5 rounded-[28px] border border-white/70 bg-white/45 p-4 shadow-card backdrop-blur-xl">
       <div className="mb-3 flex items-center justify-between">
@@ -1515,7 +1647,14 @@ function RecentRecords({ records, onOpenRecord, onRequestDelete }) {
       ) : (
         <div className="space-y-2">
           {records.slice(0, 3).map((record) => (
-            <SwipeRecordRow key={record.id} record={record} compact onOpen={onOpenRecord} onRequestDelete={onRequestDelete} />
+            <SwipeRecordRow
+              key={record.id}
+              record={record}
+              compact
+              onOpen={onOpenRecord}
+              onRequestDelete={onRequestDelete}
+              onAmountEdit={onQuickEditAmount}
+            />
           ))}
         </div>
       )}
@@ -1541,10 +1680,12 @@ function App() {
   const [deleteCandidateId, setDeleteCandidateId] = useState(null);
   const [undoDelete, setUndoDelete] = useState(null);
   const [editingRecordId, setEditingRecordId] = useState(null);
+  const [quickAmountRecordId, setQuickAmountRecordId] = useState(null);
   const [touchStartX, setTouchStartX] = useState(null);
   const [selectedDate, setSelectedDate] = useState(() => toDateInputValue(new Date()));
   const todayDate = toDateInputValue(new Date());
   const editingRecord = records.find((record) => record.id === editingRecordId) || null;
+  const quickAmountRecord = records.find((record) => record.id === quickAmountRecordId) || null;
 
   useEffect(() => {
     saveRecords(records);
@@ -1600,10 +1741,10 @@ function App() {
       .filter((record) => isNormalRecord(record) && record.type === "income" && isToday(record.date))
       .reduce((sum, record) => sum + record.amount, 0);
     const monthBalance = records
-      .filter((record) => isNormalRecord(record) && isThisMonth(record.date))
+      .filter((record) => isNormalRecord(record) && isSameMonth(record.date, currentMonthKey))
       .reduce((sum, record) => sum + (record.type === "income" ? record.amount : -record.amount), 0);
     const monthExpense = records
-      .filter((record) => isNormalRecord(record) && record.type === "expense" && isThisMonth(record.date))
+      .filter((record) => isNormalRecord(record) && record.type === "expense" && isSameMonth(record.date, currentMonthKey))
       .reduce((sum, record) => sum + record.amount, 0);
     const budgetBalance = activeBudget ? activeBudget - monthExpense : monthBalance;
     const budgetPercent = activeBudget ? Math.max(0, Math.min(100, ((activeBudget - monthExpense) / activeBudget) * 100)) : 0;
@@ -1881,10 +2022,10 @@ function App() {
       nextRecord.accountId = account.id;
       nextRecord.account = account.name;
     }
-    nextRecord.category = updates.category || record.category;
-    nextRecord.date = updates.date || record.date;
-    nextRecord.amount = Number(updates.amount || record.amount || 0);
-    nextRecord.note = updates.note || "";
+    nextRecord.category = updates.category ?? record.category;
+    nextRecord.date = updates.date ?? record.date;
+    nextRecord.amount = Number(updates.amount ?? record.amount ?? 0);
+    nextRecord.note = updates.note ?? record.note ?? "";
     nextRecord.affectsBalance = updates.affectsBalance ?? record.affectsBalance ?? true;
 
     let nextAccounts = accounts;
@@ -1903,6 +2044,7 @@ function App() {
     setRecords(nextRecords);
     saveRecords(nextRecords);
     setEditingRecordId(null);
+    setQuickAmountRecordId(null);
     setFeedback("这条记录已轻轻改好。");
     setPulseKey((key) => key + 1);
   }
@@ -1918,6 +2060,7 @@ function App() {
     const nextRecords = records.filter((item) => item.id !== recordId);
 
     setEditingRecordId(null);
+    setQuickAmountRecordId(null);
     setDeleteCandidateId(null);
     setUndoDelete({ items: [{ record, index: recordIndex }] });
     setAccounts(nextAccounts);
@@ -1943,6 +2086,7 @@ function App() {
       setAccounts((current) => applyRecordToAccounts(current, record, "revert"));
     }
     setRecords((current) => current.filter((item) => item.id !== record.id));
+    setQuickAmountRecordId(null);
     setDeleteCandidateId(null);
     setFeedback(record.balanceApplied ? "已删除，余额也帮你恢复啦。" : "这条记录已轻轻移走。");
     setPulseKey((key) => key + 1);
@@ -2107,7 +2251,12 @@ function App() {
               {summaryCards.map((card) => (
                 <SummaryCard key={card.label} card={card} />
               ))}
-              <RecentRecords records={records} onOpenRecord={setEditingRecordId} onRequestDelete={requestDeleteRecord} />
+              <RecentRecords
+                records={records}
+                onOpenRecord={setEditingRecordId}
+                onRequestDelete={requestDeleteRecord}
+                onQuickEditAmount={setQuickAmountRecordId}
+              />
             </section>
           </div>
         </section>
@@ -2127,6 +2276,7 @@ function App() {
           onRequestBatchDelete={requestBatchDeleteRecords}
           onCompleteReceivable={completeReceivable}
           onCompletePayable={completePayable}
+          onQuickEditAmount={setQuickAmountRecordId}
         />
       </div>
 
@@ -2137,6 +2287,14 @@ function App() {
           onClose={() => setEditingRecordId(null)}
           onSave={handleSaveRecordEdits}
           onDelete={requestDeleteRecord}
+        />
+      )}
+
+      {quickAmountRecord && (
+        <RecordAmountSheet
+          record={quickAmountRecord}
+          onClose={() => setQuickAmountRecordId(null)}
+          onSave={handleSaveRecordEdits}
         />
       )}
 
