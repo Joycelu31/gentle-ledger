@@ -61,10 +61,18 @@ input[inputmode="decimal"]::-webkit-inner-spin-button {
   isolation: isolate;
 }
 
+.mood-scene-art {
+  filter: drop-shadow(0 10px 18px rgba(83, 113, 74, 0.18));
+}
+
+.mood-figure {
+  filter: drop-shadow(0 9px 12px rgba(88, 72, 52, 0.18));
+}
+
 .mood-light {
   background:
-    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.9), transparent 34%),
-    linear-gradient(180deg, rgba(237, 246, 234, 0.74), rgba(255, 255, 255, 0.32));
+    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.86), transparent 34%),
+    linear-gradient(180deg, rgba(237, 246, 234, 0.68), rgba(255, 255, 255, 0.32));
   animation: mood-light-breathe 8s ease-in-out infinite;
 }
 
@@ -91,10 +99,12 @@ input[inputmode="decimal"]::-webkit-inner-spin-button {
 
 .mood-cloud-a {
   animation: mood-cloud-drift-a 34s linear infinite;
+  box-shadow: 0 8px 18px rgba(123, 152, 111, 0.1);
 }
 
 .mood-cloud-b {
   animation: mood-cloud-drift-b 42s linear infinite;
+  box-shadow: 0 8px 18px rgba(123, 152, 111, 0.09);
 }
 
 .mood-grass {

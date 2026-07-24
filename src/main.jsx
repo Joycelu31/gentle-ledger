@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Leaf, Sprout } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronRight, Leaf, Search, Sprout } from "lucide-react";
 import "./styles.css";
 
 import { bootstrapApp } from "./bootstrap";
@@ -245,6 +245,51 @@ function PendingCenter({ records, onCompleteReceivable, onCompletePayable, onDel
   );
 }
 
+function CollapsibleInfoSection({ title, note, count, open, onToggle, children }) {
+  return (
+    <section className="border-t border-white/60 py-3 first:border-t-0">
+      <button className="flex w-full items-center justify-between gap-3 text-left" type="button" onClick={onToggle}>
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-stone-600">{title}</span>
+          {note && <span className="mt-0.5 block text-xs leading-5 text-stone-400">{note}</span>}
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          {count !== undefined && <span className="rounded-full bg-white/65 px-2.5 py-1 text-xs text-stone-400">{count}</span>}
+          <ChevronDown className={`text-leaf-600 transition ${open ? "rotate-180" : ""}`} size={17} strokeWidth={2} />
+        </span>
+      </button>
+      {open && <div className="mt-3">{children}</div>}
+    </section>
+  );
+}
+
+function TimelineHintSheet({ onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end bg-stone-900/22 px-4 pb-4 backdrop-blur-md" onClick={onClose}>
+      <div
+        className="mx-auto w-full max-w-[430px] rounded-[30px] border border-leaf-100 bg-[#fffef9] p-5 shadow-[0_24px_70px_rgba(65,84,55,0.24)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-leaf-50 text-leaf-700">
+            <CalendarDays size={19} strokeWidth={1.9} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-stone-600">日历查账</p>
+            <h2 className="mt-1 text-lg font-semibold text-stone-800">下一阶段会完善按日历查记录</h2>
+            <p className="mt-2 text-sm leading-6 text-stone-500">
+              这一轮先把入口留清楚。之后可以在这里按日期查看流水、搜索关键词，并快速回到某一天的记录。
+            </p>
+          </div>
+        </div>
+        <button className="mt-5 w-full rounded-2xl bg-leaf-700 px-4 py-3 text-sm font-medium text-white" type="button" onClick={onClose}>
+          知道了
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CategorySummary({ records }) {
   const summary = buildCategorySummary(records);
   const pendingCount = records.filter((record) => !isNormalRecord(record)).length;
@@ -295,13 +340,13 @@ function CategorySummary({ records }) {
 function MoodScene({ scene }) {
   const baseScene = scene?.split("-")[0] || "sit";
   return (
-    <div className="mood-scene relative mx-auto mt-8 h-52 w-full max-w-[340px] overflow-hidden rounded-[34px] border border-white/70 bg-white/45 shadow-card backdrop-blur-xl">
+    <div className="mood-scene relative mx-auto mt-8 h-52 w-full max-w-[340px] overflow-hidden rounded-[34px] border border-leaf-100/70 bg-white/50 shadow-card backdrop-blur-xl">
       <div className="mood-light absolute inset-0" />
-      <div className="mood-cloud mood-cloud-a absolute left-8 top-8 h-7 w-20 rounded-full bg-white/55" />
-      <div className="mood-cloud mood-cloud-b absolute right-8 top-14 h-6 w-16 rounded-full bg-white/45" />
-      <svg className="absolute inset-x-0 bottom-0 h-40 w-full" viewBox="0 0 360 170" aria-hidden="true">
-        <path d="M0 116c44-14 74-10 119 1 42 10 70-7 111-13 45-7 84 7 130 24v42H0Z" fill="#d9ecd3" />
-        <path className="mood-grass" d="M0 132c53-12 104-8 153 3 49 11 98-13 143-4 22 5 43 12 64 13v26H0Z" fill="#c5dfbb" />
+      <div className="mood-cloud mood-cloud-a absolute left-8 top-8 h-7 w-20 rounded-full bg-white/72" />
+      <div className="mood-cloud mood-cloud-b absolute right-8 top-14 h-6 w-16 rounded-full bg-white/62" />
+      <svg className="mood-scene-art absolute inset-x-0 bottom-0 h-40 w-full" viewBox="0 0 360 170" aria-hidden="true">
+        <path d="M0 116c44-14 74-10 119 1 42 10 70-7 111-13 45-7 84 7 130 24v42H0Z" fill="#cbe7c3" />
+        <path className="mood-grass" d="M0 132c53-12 104-8 153 3 49 11 98-13 143-4 22 5 43 12 64 13v26H0Z" fill="#abcfa0" />
 
         {(scene === "walk-sun" || scene === "shine-stars") && (
           <g className="mood-breathe" opacity=".75">
@@ -329,7 +374,7 @@ function MoodScene({ scene }) {
         )}
 
         {baseScene === "hug" && (
-          <g className="mood-breathe" transform="translate(104 56)">
+          <g className="mood-breathe mood-figure" transform="translate(104 56)">
             <ellipse cx="70" cy="70" rx="58" ry="34" fill="#fff7ea" />
             <circle cx="70" cy="38" r="34" fill="#fff7ea" />
             <circle cx="49" cy="14" r="13" fill="#fff7ea" />
@@ -348,7 +393,7 @@ function MoodScene({ scene }) {
         )}
 
         {baseScene === "rest" && (
-          <g className="mood-breathe" transform="translate(118 94)">
+          <g className="mood-breathe mood-figure" transform="translate(118 94)">
             <ellipse cx="70" cy="35" rx="52" ry="18" fill="#fffaf0" />
             <circle cx="115" cy="25" r="16" fill="#fffaf0" />
             <path d="M122 24h9M122 30h9" stroke="#5a5147" strokeWidth="2" strokeLinecap="round" />
@@ -359,8 +404,8 @@ function MoodScene({ scene }) {
         )}
 
         {baseScene === "shine" && (
-          <g className="mood-bounce-soft" transform="translate(86 66)">
-            <path d="M62 5 67 20 83 20 70 29 75 44 62 35 49 44 54 29 41 20 57 20Z" fill="#f3d580" opacity=".9" />
+          <g className="mood-bounce-soft mood-figure" transform="translate(86 66)">
+            <path d="M62 5 67 20 83 20 70 29 75 44 62 35 49 44 54 29 41 20 57 20Z" fill="#f0c85d" opacity=".96" />
             <g transform="translate(0 44) scale(.85)">
               <ellipse cx="34" cy="31" rx="28" ry="15" fill="#e9c66f" />
               <circle cx="62" cy="23" r="15" fill="#e9c66f" />
@@ -378,7 +423,7 @@ function MoodScene({ scene }) {
         )}
 
         {(baseScene === "walk" || baseScene === "sit") && (
-          <g className={baseScene === "walk" ? "mood-walk" : "mood-breathe"} transform="translate(128 78)">
+          <g className={`${baseScene === "walk" ? "mood-walk" : "mood-breathe"} mood-figure`} transform="translate(128 78)">
             <ellipse cx="44" cy="42" rx="34" ry="17" fill="#fffaf0" />
             <circle cx="78" cy="32" r="18" fill="#fffaf0" />
             <circle cx="84" cy="30" r="2.4" fill="#3d3a32" />
@@ -1015,6 +1060,8 @@ function RecordPage({
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirmBatchDelete, setConfirmBatchDelete] = useState(false);
   const [selectedMonthKey, setSelectedMonthKey] = useState(() => getMonthKey());
+  const [showTimelineHint, setShowTimelineHint] = useState(false);
+  const [openInfoSections, setOpenInfoSections] = useState({});
   const assetPreview = accounts.filter((account) => Number(account.balance || 0) !== 0).slice(0, 2);
   const baseRecords = activeTravelId ? records.filter((record) => record.travelId === activeTravelId) : records;
   const visibleRecords = useMemo(
@@ -1034,6 +1081,8 @@ function RecordPage({
       { income: 0, expense: 0 },
     );
   }, [visibleRecords]);
+  const monthBalance = recentTotals.income - recentTotals.expense;
+  const normalRecordCount = visibleRecords.filter(isNormalRecord).length;
 
   const groupedRecords = useMemo(() => groupRecordsByMonth(visibleRecords), [visibleRecords]);
   const todayMood = moodByDate[toDateInputValue(new Date())];
@@ -1075,6 +1124,13 @@ function RecordPage({
     next.setMonth(next.getMonth() + step);
     setSelectedMonthKey(getMonthKey(next));
     cancelBatchMode();
+  }
+
+  function toggleInfoSection(sectionId) {
+    setOpenInfoSections((current) => ({
+      ...current,
+      [sectionId]: !current[sectionId],
+    }));
   }
 
   return (
@@ -1254,6 +1310,329 @@ function RecordPage({
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+function RecordPageStageOne({
+  records,
+  accounts,
+  moodByDate,
+  travels,
+  activeTravelId,
+  onCreateTravel,
+  onSelectTravel,
+  onUpdateTravelNote,
+  onUpdateTravelMeta,
+  onOpenAssets,
+  onOpenRecord,
+  onRequestDelete,
+  onRequestBatchDelete,
+  onCompleteReceivable,
+  onCompletePayable,
+  onQuickEditAmount,
+}) {
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmBatchDelete, setConfirmBatchDelete] = useState(false);
+  const [selectedMonthKey, setSelectedMonthKey] = useState(() => getMonthKey());
+  const [showTimelineHint, setShowTimelineHint] = useState(false);
+  const [openInfoSections, setOpenInfoSections] = useState({});
+  const assetPreview = accounts.filter((account) => Number(account.balance || 0) !== 0).slice(0, 2);
+  const baseRecords = activeTravelId ? records.filter((record) => record.travelId === activeTravelId) : records;
+  const visibleRecords = useMemo(
+    () => baseRecords.filter((record) => isSameMonth(record.date, selectedMonthKey)),
+    [baseRecords, selectedMonthKey],
+  );
+  const recentTotals = useMemo(() => {
+    return visibleRecords.filter(isNormalRecord).reduce(
+      (totals, record) => {
+        if (record.type === "income") {
+          totals.income += record.amount;
+        } else {
+          totals.expense += record.amount;
+        }
+        return totals;
+      },
+      { income: 0, expense: 0 },
+    );
+  }, [visibleRecords]);
+  const monthBalance = recentTotals.income - recentTotals.expense;
+  const groupedRecords = useMemo(() => groupRecordsByMonth(visibleRecords), [visibleRecords]);
+  const pendingReceivableCount = records.filter(
+    (record) => normalizeTransactionType(record.transactionType) === "pending_receivable" && record.transactionStatus !== "completed",
+  ).length;
+  const pendingPayableCount = records.filter(
+    (record) => normalizeTransactionType(record.transactionType) === "pending_payable" && record.transactionStatus !== "completed",
+  ).length;
+  const todayMood = moodByDate[toDateInputValue(new Date())];
+
+  function enterBatchMode(recordId) {
+    setBatchMode(true);
+    setSelectedIds((current) => (current.includes(recordId) ? current : [...current, recordId]));
+  }
+
+  function toggleSelected(recordId) {
+    setConfirmBatchDelete(false);
+    setSelectedIds((current) => (current.includes(recordId) ? current.filter((id) => id !== recordId) : [...current, recordId]));
+  }
+
+  function cancelBatchMode() {
+    setBatchMode(false);
+    setSelectedIds([]);
+    setConfirmBatchDelete(false);
+  }
+
+  function deleteSelectedRecords() {
+    if (!selectedIds.length) return;
+    if (!confirmBatchDelete) {
+      setConfirmBatchDelete(true);
+      return;
+    }
+    onRequestBatchDelete(selectedIds);
+    cancelBatchMode();
+  }
+
+  function moveSelectedMonth(step) {
+    const next = new Date(`${selectedMonthKey}-01T00:00:00`);
+    next.setMonth(next.getMonth() + step);
+    setSelectedMonthKey(getMonthKey(next));
+    cancelBatchMode();
+  }
+
+  function toggleInfoSection(sectionId) {
+    setOpenInfoSections((current) => ({
+      ...current,
+      [sectionId]: !current[sectionId],
+    }));
+  }
+
+  return (
+    <section className="w-screen shrink-0 px-5 pb-40 pt-5">
+      <div className="mx-auto w-full max-w-[430px]">
+        <header className="flex items-start justify-between gap-3 py-2">
+          <div className="min-w-0">
+            <p className="text-sm text-stone-400">往左一页，看见生活的痕迹</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-normal text-stone-900">记录</h1>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <button
+              className="grid h-10 w-10 place-items-center rounded-full border border-white/80 bg-white/72 text-leaf-700 shadow-sm backdrop-blur-xl transition active:scale-[0.98]"
+              type="button"
+              aria-label="搜索预留"
+              onClick={() => setShowTimelineHint(true)}
+            >
+              <Search size={17} strokeWidth={2} />
+            </button>
+            <button
+              className="inline-flex h-10 items-center gap-1.5 rounded-full border border-white/80 bg-white/75 px-3 text-xs font-medium text-leaf-700 shadow-sm backdrop-blur-xl transition active:scale-[0.98]"
+              type="button"
+              onClick={() => setShowTimelineHint(true)}
+            >
+              <CalendarDays size={16} strokeWidth={1.9} />
+              日历查账
+            </button>
+          </div>
+        </header>
+
+        <section className="mt-5 rounded-[28px] border border-white/80 bg-white/72 p-4 shadow-card backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-leaf-50 text-lg font-semibold text-leaf-700 transition active:scale-[0.98]"
+              type="button"
+              onClick={() => moveSelectedMonth(-1)}
+              aria-label="上个月"
+            >
+              ‹
+            </button>
+            <label className="min-w-0 flex-1 text-center text-xs text-stone-400">
+              月份
+              <input
+                className="mt-1 h-11 w-full rounded-2xl border border-leaf-100 bg-white/90 px-3 text-center text-sm font-medium text-stone-700 outline-none"
+                type="month"
+                value={selectedMonthKey}
+                onChange={(event) => {
+                  if (event.target.value) {
+                    setSelectedMonthKey(event.target.value);
+                    cancelBatchMode();
+                  }
+                }}
+              />
+            </label>
+            <button
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-leaf-50 text-lg font-semibold text-leaf-700 transition active:scale-[0.98]"
+              type="button"
+              onClick={() => moveSelectedMonth(1)}
+              aria-label="下个月"
+            >
+              ›
+            </button>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <article className="rounded-[22px] bg-white/78 p-3">
+              <p className="text-xs text-stone-400">本月支出</p>
+              <p className="mt-2 text-xl font-semibold text-bark-500">{toCurrency(recentTotals.expense)}</p>
+            </article>
+            <article className="rounded-[22px] bg-leaf-50/75 p-3">
+              <p className="text-xs text-stone-400">本月收入</p>
+              <p className="mt-2 text-xl font-semibold text-leaf-700">{toCurrency(recentTotals.income)}</p>
+            </article>
+            <article className="rounded-[22px] bg-white/78 p-3">
+              <p className="text-xs text-stone-400">本月结余</p>
+              <p className={`mt-2 text-xl font-semibold ${monthBalance >= 0 ? "text-leaf-700" : "text-bark-500"}`}>{toCurrency(monthBalance)}</p>
+            </article>
+            <article className="rounded-[22px] bg-white/78 p-3">
+              <p className="text-xs text-stone-400">本月记录</p>
+              <p className="mt-2 text-xl font-semibold text-stone-800">{visibleRecords.length} 笔</p>
+            </article>
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[28px] border border-white/80 bg-white/68 p-4 shadow-card backdrop-blur-xl">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-medium text-stone-700">{batchMode ? "批量管理" : activeTravelId ? "旅行流水" : "本月流水"}</h2>
+              <p className="mt-1 text-xs text-stone-400">{formatMonthLabel(selectedMonthKey)} · 最近记录按日期分组</p>
+            </div>
+            {batchMode ? (
+              <button className="rounded-full bg-white/70 px-3 py-1.5 text-xs text-stone-500" type="button" onClick={cancelBatchMode}>
+                取消
+              </button>
+            ) : (
+              <span className="rounded-full bg-white/70 px-2.5 py-1 text-xs text-stone-400">{visibleRecords.length} 笔</span>
+            )}
+          </div>
+
+          {groupedRecords.length === 0 ? (
+            <p className="py-8 text-center text-sm leading-6 text-stone-400">
+              这个月还没有留下记录
+              <br />
+              慢慢来，也没关系。
+            </p>
+          ) : (
+            <div className="timeline-list max-h-[520px] space-y-5 overflow-y-auto pr-1">
+              {groupedRecords.map((group) => (
+                <section key={group.monthKey}>
+                  <div className="mb-3 flex items-center gap-3">
+                    <h3 className="text-sm font-medium text-stone-600">{formatMonthLabel(group.monthKey)}</h3>
+                    <span className="h-px flex-1 bg-white/70" />
+                  </div>
+                  <div className="space-y-3">
+                    {group.records.map((record) => (
+                      <SwipeRecordRow
+                        key={record.id}
+                        record={record}
+                        batchMode={batchMode}
+                        selected={selectedIds.includes(record.id)}
+                        onOpen={onOpenRecord}
+                        onRequestDelete={onRequestDelete}
+                        onLongPress={enterBatchMode}
+                        onToggleSelect={toggleSelected}
+                        onAmountEdit={onQuickEditAmount}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-5 rounded-[28px] border border-white/75 bg-white/50 px-4 shadow-card backdrop-blur-xl">
+          <CollapsibleInfoSection
+            title="账户与提醒"
+            note={pendingReceivableCount || pendingPayableCount ? `待收 ${pendingReceivableCount} · 待支 ${pendingPayableCount}` : "资产入口和提醒中心收在这里"}
+            count={assetPreview.length}
+            open={!!openInfoSections.accounts}
+            onToggle={() => toggleInfoSection("accounts")}
+          >
+            <div className="rounded-[22px] bg-white/60 p-3">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm font-medium text-stone-600">账户概览</p>
+                <button className="rounded-full bg-leaf-50 px-3 py-1.5 text-xs font-medium text-leaf-700" type="button" onClick={onOpenAssets}>
+                  查看全部资产
+                </button>
+              </div>
+              {assetPreview.length === 0 ? (
+                <p className="py-2 text-sm leading-6 text-stone-400">先创建一个常用账户吧</p>
+              ) : (
+                <div className="grid gap-2">
+                  {assetPreview.map((account) => (
+                    <div key={account.id} className="flex items-center justify-between rounded-2xl bg-white/62 px-3 py-2 text-sm">
+                      <span className="truncate text-stone-600">{getAccountDisplayName(account)}</span>
+                      <span className="shrink-0 font-medium text-leaf-700">{toCurrency(account.balance)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <PendingCenter
+              records={records}
+              onCompleteReceivable={onCompleteReceivable}
+              onCompletePayable={onCompletePayable}
+              onDeleteReminder={onRequestDelete}
+            />
+          </CollapsibleInfoSection>
+
+          <CollapsibleInfoSection
+            title="旅行账本"
+            note={activeTravelId ? "正在查看旅行记录" : "旅行模式和旅行备注"}
+            count={travels.length}
+            open={!!openInfoSections.travel}
+            onToggle={() => toggleInfoSection("travel")}
+          >
+            <TravelModePanel
+              travels={travels}
+              activeTravelId={activeTravelId}
+              records={records}
+              onCreateTravel={onCreateTravel}
+              onSelectTravel={onSelectTravel}
+              onUpdateTravelNote={onUpdateTravelNote}
+              onUpdateTravelMeta={onUpdateTravelMeta}
+            />
+          </CollapsibleInfoSection>
+
+          <CollapsibleInfoSection
+            title="月度洞察"
+            note={todayMood ? `今天：${todayMood.label}` : "收入支出、节奏和分类小结"}
+            count={visibleRecords.length}
+            open={!!openInfoSections.insights}
+            onToggle={() => toggleInfoSection("insights")}
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <article className="rounded-[22px] border border-white/80 bg-white/70 p-4">
+                <p className="text-xs text-stone-400">最近收入</p>
+                <p className="mt-2 text-lg font-semibold text-leaf-700">{toCurrency(recentTotals.income)}</p>
+              </article>
+              <article className="rounded-[22px] border border-white/80 bg-white/70 p-4">
+                <p className="text-xs text-stone-400">最近支出</p>
+                <p className="mt-2 text-lg font-semibold text-bark-500">{toCurrency(recentTotals.expense)}</p>
+              </article>
+            </div>
+            <LightStats records={visibleRecords} monthKey={selectedMonthKey} />
+            <CategorySummary records={visibleRecords} />
+          </CollapsibleInfoSection>
+        </section>
+      </div>
+
+      {batchMode && (
+        <div className="fixed inset-x-0 bottom-24 z-30 px-5">
+          <div className="mx-auto flex max-w-[430px] items-center justify-between gap-3 rounded-[24px] border border-white/80 bg-white/86 p-3 shadow-soft backdrop-blur-2xl">
+            <span className="text-sm text-stone-500">已选 {selectedIds.length} 笔</span>
+            <button
+              className="rounded-2xl bg-[#f7e9e5] px-4 py-3 text-sm font-medium text-rose-500 disabled:opacity-40"
+              type="button"
+              disabled={!selectedIds.length}
+              onClick={deleteSelectedRecords}
+            >
+              {confirmBatchDelete ? "确认删除" : "删除选中记录"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showTimelineHint && <TimelineHintSheet onClose={() => setShowTimelineHint(false)} />}
     </section>
   );
 }
@@ -2260,7 +2639,7 @@ function App() {
             </section>
           </div>
         </section>
-        <RecordPage
+        <RecordPageStageOne
           records={records}
           accounts={accounts}
           moodByDate={moodByDate}
